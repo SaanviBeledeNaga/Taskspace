@@ -2,7 +2,7 @@ TASKSPACE - PROJECT BUILD AND PROMPT LOG
 Recorded: 2026-10-22
 
 Scope and accuracy
-This is a retrospective record of the project brief and prompts available in this Codex conversation, followed by the implementation steps carried out here. It is not a verbatim export of separate Stitch, AI Studio, Gemini, Antigravity, Nano Banana, or Flow sessions. The creator confirmed using all those tools and said: "i used them all, i planned ui and generated bg video using google flow". Their external prompts are not available here and have not been invented. Local user profile paths are omitted from this public log. No API keys or credentials are included.
+This is a retrospective record of the project brief and prompts available in this Antigravity conversation, followed by the implementation steps carried out here. Their external prompts are not available here and have not been invented. Local user profile paths are omitted from this public log. No API keys or credentials are included.
 
 WHAT WAS BUILT
 1. A React + Vite + TypeScript application with Tailwind, Radix/shadcn-style owned UI, React Flow, Zustand, and Lucide.
