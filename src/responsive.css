@@ -122,7 +122,8 @@ main{padding-inline:24px}
  .canvas-shell{height:clamp(400px,68svh,600px)}
  .smart-arrange{left:10px;top:10px;min-height:44px;font-size:12px}
  .remove-connection{top:64px;right:10px;min-height:44px;max-width:calc(100% - 20px)}
- .canvas-hint{left:64px;right:12px;bottom:17px;max-width:none;font-size:10px;line-height:1.6}
+ .canvas-hint{left:82px;right:20px;bottom:26px;max-width:none;font-size:11px;line-height:1.65;overflow-wrap:break-word}
+ .react-flow__controls.bottom.left{margin:16px}
  .react-flow__controls-button{width:44px!important;height:44px!important}
  .card-drag-handle{width:44px;height:44px}
 }
