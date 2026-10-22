@@ -1,15 +1,17 @@
 import { create } from 'zustand';
+import { arrangeCards } from './arrange';
+import { readAttachments, readNotes, noteColors, type Attachment, type StickyNote } from './board';
 import { defaultZone, validSchedule, validZone, type TaskSchedule } from './timing';
 import { historyChanges, readHistory, snapshotTask, type TaskHistoryEvent } from './statistics';
-export type Task = {id:string;title:string;description:string;completed:boolean;completedAt?:string;createdAt:string;updatedAt:string;schedule?:TaskSchedule;deliveredAlerts?:string[]};
+export type Task = {id:string;title:string;description:string;completed:boolean;completedAt?:string;createdAt:string;updatedAt:string;schedule?:TaskSchedule;deliveredAlerts?:string[];attachments?:Attachment[]};
 export type CardHandle = 'left'|'right';
 export type Connection = {id:string;sourceTaskId:string;targetTaskId:string;sourceHandle?:CardHandle;targetHandle?:CardHandle};
 type Position = {x:number;y:number};
-type Prefs = {view:'list'|'canvas';filter:'all'|'active'|'completed';timeZone:string;viewport:{x:number;y:number;zoom:number}};
-type Data = {schemaVersion:1;tasks:Task[];positions:Record<string,Position>;connections:Connection[];preferences:Prefs;historyStartedAt:string;history:TaskHistoryEvent[]};
+type Prefs = {view:'list'|'canvas'|'notes';filter:'all'|'active'|'completed';timeZone:string;viewport:{x:number;y:number;zoom:number}};
+type Data = {schemaVersion:1;tasks:Task[];notes:StickyNote[];positions:Record<string,Position>;connections:Connection[];preferences:Prefs;historyStartedAt:string;history:TaskHistoryEvent[]};
 type Undo = {token:string;task:Task;index:number;position?:Position;connections:Connection[]};
 export const KEY='taskspace-workspace-v1';
-export const empty = ():Data => ({schemaVersion:1,tasks:[],positions:{},connections:[],historyStartedAt:new Date().toISOString(),history:[],preferences:{view:'list',filter:'all',timeZone:defaultZone(),viewport:{x:0,y:0,zoom:1}}});
+export const empty = ():Data => ({schemaVersion:1,tasks:[],notes:[],positions:{},connections:[],historyStartedAt:new Date().toISOString(),history:[],preferences:{view:'list',filter:'all',timeZone:defaultZone(),viewport:{x:0,y:0,zoom:1}}});
 const finite=(x:unknown):x is number=>typeof x==='number'&&Number.isFinite(x);
 export function parseSaved(raw:string):Data {
  const x=JSON.parse(raw); if(x?.schemaVersion!==1||!Array.isArray(x.tasks)||!Array.isArray(x.connections)) throw Error('Unsupported data');
@@ -22,12 +24,20 @@ export function parseSaved(raw:string):Data {
  const observedAt=new Date().toISOString(),history=readHistory(x.history);
  for(const task of tasks)if(!history.some(e=>e.taskId===task.id))history.push({id:crypto.randomUUID(),taskId:task.id,at:observedAt,kind:'baseline',task:snapshotTask(task)});
  const historyStartedAt=Array.isArray(x.history)&&typeof x.historyStartedAt==='string'&&Number.isFinite(Date.parse(x.historyStartedAt))?x.historyStartedAt:observedAt;
- return {schemaVersion:1,tasks,connections,positions,preferences,history,historyStartedAt};
+ tasks.forEach(t=>t.attachments=readAttachments(t.attachments));
+ if(x.preferences?.view==='notes')preferences.view='notes';
+ return {schemaVersion:1,tasks,notes:readNotes(x.notes),connections,positions,preferences,history,historyStartedAt};
 }
 let initial=empty(), initialError='';
 try{const raw=localStorage.getItem(KEY);if(raw)initial=parseSaved(raw);}catch{initialError='Saved workspace could not be loaded. You can start a new list.';}
-type Store=Data & {undo:Undo|null;notice:string;storageError:string;add:(title:string,position?:Position)=>void;edit:(id:string,title:string,description:string)=>void;scheduleTask:(id:string,schedule?:TaskSchedule)=>void;markDelivered:(id:string,keys:string[])=>void;toggle:(id:string)=>void;remove:(id:string)=>void;restore:(token:string)=>void;clearUndo:(token:string)=>void;move:(id:string,p:Position)=>void;connect:(a:string,b:string,sourceHandle?:CardHandle,targetHandle?:CardHandle)=>void;disconnect:(id:string)=>void;setPrefs:(p:Partial<Prefs>)=>void;notify:(s:string)=>void};
+type Store=Data & {undo:Undo|null;notice:string;storageError:string;add:(title:string,position?:Position)=>void;edit:(id:string,title:string,description:string)=>void;scheduleTask:(id:string,schedule?:TaskSchedule)=>void;markDelivered:(id:string,keys:string[])=>void;toggle:(id:string)=>void;remove:(id:string)=>void;restore:(token:string)=>void;clearUndo:(token:string)=>void;move:(id:string,p:Position)=>void;connect:(a:string,b:string,sourceHandle?:CardHandle,targetHandle?:CardHandle)=>void;disconnect:(id:string)=>void;setPrefs:(p:Partial<Prefs>)=>void;notify:(s:string)=>void;smartArrange:(ids:string[],heights?:Record<string,number>)=>void;addNote:()=>string;updateNote:(id:string,patch:Partial<Pick<StickyNote,'title'|'html'|'color'|'checklist'>>)=>void;removeNote:(id:string)=>void;attach:(kind:'task'|'note',id:string,file:Attachment)=>boolean;detach:(kind:'task'|'note',id:string,fileId:string)=>void};
 export const useStore=create<Store>((set,get)=>({...initial,undo:null,notice:initialError,storageError:'',
+ smartArrange:(ids,heights)=>{const s=get(),visible=s.tasks.filter(t=>ids.includes(t.id)),layout=arrangeCards(visible,heights),connections=[...s.connections];layout.ordered.forEach((task,i)=>{const next=layout.ordered[i+1];if(!next||connections.some(c=>(c.sourceTaskId===task.id&&c.targetTaskId===next.id)||(c.sourceTaskId===next.id&&c.targetTaskId===task.id)))return;const forward=Math.floor(i/3)%2===0;connections.push({id:crypto.randomUUID(),sourceTaskId:task.id,targetTaskId:next.id,sourceHandle:forward?'right':'left',targetHandle:Math.floor((i+1)/3)%2===0?'left':'right'});});set({positions:{...s.positions,...layout.positions},connections,notice:'Cards arranged. Your existing connections are kept.'});},
+ addNote:()=>{const id=crypto.randomUUID(),now=new Date().toISOString();set(s=>({notes:[...s.notes,{id,title:'',html:'',color:noteColors[s.notes.length%noteColors.length],checklist:[],attachments:[],createdAt:now,updatedAt:now}]}));return id;},
+ updateNote:(id,patch)=>set(s=>({notes:s.notes.map(n=>n.id===id?{...n,...patch,updatedAt:new Date().toISOString()}:n)})),
+ removeNote:id=>set(s=>({notes:s.notes.filter(n=>n.id!==id)})),
+ attach:(kind,id,file)=>{const key=kind==='task'?'tasks':'notes',items=get()[key];if(!items.some(t=>t.id===id))return false;if(kind==='task')set(s=>({tasks:s.tasks.map(t=>t.id===id?{...t,attachments:[...(t.attachments??[]),file]}:t)}));else set(s=>({notes:s.notes.map(n=>n.id===id?{...n,attachments:[...n.attachments,file]}:n)}));return true;},
+ detach:(kind,id,fileId)=>{if(kind==='task')set(s=>({tasks:s.tasks.map(t=>t.id===id?{...t,attachments:(t.attachments??[]).filter(f=>f.id!==fileId)}:t)}));else set(s=>({notes:s.notes.map(n=>n.id===id?{...n,attachments:n.attachments.filter(f=>f.id!==fileId)}:n)}));},
  add:(title,position)=>{title=title.trim();if(!title)return;const s=get(),id=crypto.randomUUID(),now=new Date().toISOString();let p=position??{x:40,y:40};let n=0;while(Object.values(s.positions).some(q=>Math.abs(q.x-p.x)<280&&Math.abs(q.y-p.y)<170)&&n++<1000)p={x:p.x+35,y:p.y+190};set({tasks:[...s.tasks,{id,title,description:'',completed:false,createdAt:now,updatedAt:now}],positions:{...s.positions,[id]:p},notice:'Task added'});},
  edit:(id,title,description)=>{if(!title.trim())return;set(s=>({tasks:s.tasks.map(t=>t.id===id?{...t,title:title.trim(),description:description.trim(),updatedAt:new Date().toISOString()}:t)}));},
  scheduleTask:(id,schedule)=>{if(schedule&&!validSchedule(schedule))return;set(s=>({tasks:s.tasks.map(t=>{if(t.id!==id)return t;const changed=JSON.stringify(t.schedule)!==JSON.stringify(schedule);return {...t,schedule,deliveredAlerts:changed?[]:t.deliveredAlerts,updatedAt:new Date().toISOString()};})}));},
@@ -47,10 +57,10 @@ useStore.subscribe((state,previous)=>{
  if(events.length)useStore.setState({history:[...state.history,...events]});
 });
 function saveWorkspace(){
- try{const current=useStore.getState();localStorage.setItem(KEY,JSON.stringify({schemaVersion:1,tasks:current.tasks,positions:current.positions,connections:current.connections,preferences:current.preferences,history:current.history,historyStartedAt:current.historyStartedAt}));if(current.storageError)useStore.setState({storageError:''});}catch{useStore.setState({storageError:'Changes could not be saved in this browser.'});}
+ try{const current=useStore.getState();localStorage.setItem(KEY,JSON.stringify({schemaVersion:1,tasks:current.tasks,notes:current.notes,positions:current.positions,connections:current.connections,preferences:current.preferences,history:current.history,historyStartedAt:current.historyStartedAt}));if(current.storageError)useStore.setState({storageError:''});}catch{useStore.setState({storageError:'Changes could not be saved in this browser.'});}
 }
 useStore.subscribe((s,previous)=>{
- if(s.tasks===previous.tasks&&s.positions===previous.positions&&s.connections===previous.connections&&s.preferences===previous.preferences&&s.history===previous.history&&s.historyStartedAt===previous.historyStartedAt)return;
+ if(s.tasks===previous.tasks&&s.notes===previous.notes&&s.positions===previous.positions&&s.connections===previous.connections&&s.preferences===previous.preferences&&s.history===previous.history&&s.historyStartedAt===previous.historyStartedAt)return;
  saveWorkspace();
 });
 // Save imported snapshots immediately so their observation date survives a reload.
