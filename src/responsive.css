@@ -1,4 +1,5 @@
 /* Keep the workspace readable on narrow screens without scaling down the app. */
+.react-flow__attribution{display:none!important}
 main{padding-inline:24px}
 .quick-add,.workspace,.task-copy,.notes-heading>div{min-width:0}
 .dialog-content{overscroll-behavior:contain;scroll-padding-block:24px}
