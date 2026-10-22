@@ -614,3 +614,6 @@ Created Golden Morning, Winter Retreat, Spring Garden, Autumn Library, and Rainy
 
 2026-10-22 — Video themes
 User supplied five local MP4 paths: Woman_writing_at_wooden_table_20261022220431.mp4 (morning), Woman_writing_at_desk_20261022221220.mp4 (rain), Woman_reading_book_in_library_20261022221050.mp4 (autumn), Woman_sketching_in_spring_garden_20261022220912.mp4 (spring), Woman_reading_under_chalet_veranda_20261022220657.mp4 (winter). Copied files into public/videos, connected each picker option to its own source, kept original video, pause/play, reduced motion and still posters. Only the selected video loads. Updated posters from the revised images with the seated woman.
+
+2026-10-23 — Responsive phone layout
+User: "make it responsive so that it looks nice on phone also". Follow-up: "remove this in canvas view" (React Flow attribution badge screenshot). Added responsive.css for a two-row phone header, full-width view navigation, compact filters and labelled daily report icon, readable inputs, larger tap targets, scrollable dialogs, responsive notes/themes/reports, safe-area spacing and mobile canvas controls. Enabled explicit pinch zoom and updated touch guidance. Hid the canvas attribution badge with React Flow proOptions; preserved dependency notices.

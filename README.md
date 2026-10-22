@@ -60,6 +60,10 @@ public/videos/background.mp4
 .github/workflows/      Firebase Hosting deployment and PR preview workflows
 ```
 
+## Phone layout
+
+The header, task controls, notes, reports, and theme picker adapt to narrow screens. Mobile inputs use readable text sizes, popups scroll within the available viewport, and safe-area padding accommodates phone notches. The canvas supports touch dragging, tap-to-connect, pinch zoom, and larger zoom/fit controls. The React Flow badge is hidden on the canvas; dependency license notices remain in the project.
+
 ## Run locally
 
 Use Node.js 22 LTS and npm.
