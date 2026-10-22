@@ -8,5 +8,6 @@
 @media(prefers-reduced-motion:reduce){.sticky-note,.click-glow{transition:none}.sticky-note:hover{transform:none}}
 
 /* Keep note controls aligned regardless of native select or SVG defaults. */
+.dialog-overlay[data-state=closed],.dialog-content[data-state=closed],.dropdown[data-state=closed]{pointer-events:none!important}
 .note-dialog .dialog-actions>.text-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;line-height:20px}
 .note-formatting select{appearance:none;-webkit-appearance:none;width:104px;height:34px;padding:0 30px 0 11px;line-height:normal;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='m3 4.5 3 3 3-3' stroke='%23e1eaf0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:12px 12px}

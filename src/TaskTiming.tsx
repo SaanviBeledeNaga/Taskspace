@@ -40,13 +40,25 @@ function ScheduleForm({task,zone,onClose}:{task:Task;zone:string;onClose:()=>voi
  {error&&<p className="error" role="alert">{error}</p>}
  <div className="dialog-actions">{task.schedule&&<button type="button" className="text-button danger" onClick={()=>{useStore.getState().scheduleTask(task.id);onClose();}}>Remove schedule</button>}<button type="button" className="text-button" onClick={onClose}>Cancel</button><button className="save-button liquid-glass" type="submit">Save schedule</button></div></form></>;
 }
-export function TaskTiming({task}:{task:Task}){
- const now=useContext(TimeContext),zone=useStore(s=>s.preferences.timeZone),[open,setOpen]=useState(false);
- const phase=taskPhase(task,now),s=task.schedule,start=s?Date.parse(s.startAt):0,end=s?Date.parse(s.endAt):0;
- const timeFormat=useMemo(()=>new Intl.DateTimeFormat('en-GB',{timeZone:zone,day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}),[zone]);
- return <div className="task-timing nodrag nopan"><button className="schedule-trigger" onClick={()=>setOpen(true)} aria-label={`${s?'Edit schedule':'Set start and end time'} for ${task.title}`}><Clock3 size={12}/>{s?`${timeFormat.format(start)} – ${timeFormat.format(end)}`:'Set start & end time'}</button>{s&&<><div className={`timing-phase ${phase==='Time is up'?'overdue':''}`}><span>{phase}</span><span>Allocated {duration(end-start)}</span></div><div className="timing-counters">{task.completed?<span>Time taken <strong>{duration(taskElapsed(task,now))}</strong></span>:now<start?<span>Starts in <strong>{duration(start-now)}</strong></span>:now<end?<><span>Elapsed <strong>{duration(taskElapsed(task,now))}</strong></span><span>Left <strong>{duration(end-now)}</strong></span></>:<><span>Elapsed <strong>{duration(taskElapsed(task,now))}</strong></span><span>Overdue <strong>{duration(now-end)}</strong></span></>}</div><div className="time-progress" role="progressbar" aria-label={`Allocated session time for ${task.title}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.min(100,taskElapsed(task,now)/(end-start)*100))}><span style={{width:`${Math.min(100,taskElapsed(task,now)/(end-start)*100)}%`}}/></div></>}
- <Dialog open={open} onOpenChange={setOpen}><DialogContent><ScheduleForm task={task} zone={zone} onClose={()=>setOpen(false)}/></DialogContent></Dialog></div>;
+const ScheduleEditorContext=createContext<((id:string)=>void)|null>(null);
+// One stable schedule editor serves both task views. Clock ticks update only
+// the countdown below, never modal ownership or its focus/pointer locks.
+export function ScheduleEditorProvider({children}:{children:ReactNode}){
+ const [taskId,setTaskId]=useState<string|null>(null);
+ const task=useStore(s=>s.tasks.find(t=>t.id===taskId)),zone=useStore(s=>s.preferences.timeZone);
+ return <ScheduleEditorContext.Provider value={setTaskId}>{children}<Dialog open={!!task} onOpenChange={open=>{if(!open)setTaskId(null);}}>{task&&<DialogContent><ScheduleForm key={task.id} task={task} zone={zone} onClose={()=>setTaskId(null)}/></DialogContent>}</Dialog></ScheduleEditorContext.Provider>;
 }
+function TaskCountdown({task}:{task:Task}){
+ const now=useCurrentTime(),s=task.schedule!;
+ const phase=taskPhase(task,now),start=Date.parse(s.startAt),end=Date.parse(s.endAt),elapsed=taskElapsed(task,now),progress=Math.min(100,elapsed/(end-start)*100);
+ return <><div className={`timing-phase ${phase==='Time is up'?'overdue':''}`}><span>{phase}</span><span>Allocated {duration(end-start)}</span></div><div className="timing-counters">{task.completed?<span>Time taken <strong>{duration(elapsed)}</strong></span>:now<start?<span>Starts in <strong>{duration(start-now)}</strong></span>:now<end?<><span>Elapsed <strong>{duration(elapsed)}</strong></span><span>Left <strong>{duration(end-now)}</strong></span></>:<><span>Elapsed <strong>{duration(elapsed)}</strong></span><span>Overdue <strong>{duration(now-end)}</strong></span></>}</div><div className="time-progress" role="progressbar" aria-label={`Allocated session time for ${task.title}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}><span style={{width:`${progress}%`}}/></div></>;
+}
+export function TaskTiming({task}:{task:Task}){
+ const zone=useStore(s=>s.preferences.timeZone),openEditor=useContext(ScheduleEditorContext),s=task.schedule;
+ const timeFormat=useMemo(()=>new Intl.DateTimeFormat('en-GB',{timeZone:zone,day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}),[zone]);
+ return <div className="task-timing nodrag nopan"><button className="schedule-trigger" onClick={()=>openEditor?.(task.id)} aria-label={`${s?'Edit schedule':'Set start and end time'} for ${task.title}`}><Clock3 size={12}/>{s?`${timeFormat.format(Date.parse(s.startAt))} – ${timeFormat.format(Date.parse(s.endAt))}`:'Set start & end time'}</button>{s&&<TaskCountdown task={task}/>}</div>;
+}
+
 type AlertItem={id:string;key:string;kind:'start'|'reminder'|'end';message:string};
 export function TaskAlerts(){
  const now=useContext(TimeContext),tasks=useStore(s=>s.tasks);const [alerts,setAlerts]=useState<AlertItem[]>([]),[enabled,setEnabled]=useState(false),[notificationStatus,setNotificationStatus]=useState(''),[volume,setVolume]=useState(.8),[testingAlarm,setTestingAlarm]=useState(false);
