@@ -14,6 +14,12 @@ A calm, single-page to-do app built for a club tech-lead selection project. Crea
 - **Task attachments:** the 📎 control beneath each card description accepts documents such as PDF, Word, Excel, and PowerPoint, as well as other files. Download or remove attached files; each file is limited to 20 MB.
 - **Cinematic design:** locally served looping video, glass surfaces, Instrument Serif and Inter typography, gentle context transitions, a sparkle cursor on controls, and a soft white cursor glow over clickable elements. Text editing keeps the normal selection cursor. Reduced-motion preferences are respected.
 
+## Video themes
+
+Use the Themes button beside the clock to choose Golden Morning, Winter Retreat, Spring Garden, Autumn Library, or Rainy Evening. Each scene plays a locally bundled, muted looping MP4 featuring a woman reading, writing, or sketching. The original cinematic video is also available. Only the selected video is mounted; JPEG posters provide thumbnails and a still fallback. Selection, coordinated glass-surface colours, and a 0–60% background-dimming setting are saved per browser. Changing themes leaves tasks, notes, schedules, connections, and alert playback intact. All six scenes support pause/play and reduced-motion preferences.
+
+The seasonal reference images were generated using Codex's built-in image-generation tool and revised to match the seated woman in the creator’s reference. The creator supplied five resulting video files; Google Flow was used for the project's background-video workflow. Full generation prompts and asset credits are in [public/themes/prompts.txt](public/themes/prompts.txt). No image-generation API runs in the deployed app.
+
 ## Google tools and development credits
 
 The creator confirmed using all the following Google tools during project development. These are development credits; the deployed app does not call Gemini or these design tools at runtime.
@@ -89,7 +95,7 @@ For a manual deployment from an already authorized Firebase CLI session:
 npm run deploy
 ```
 
-Replace `public/videos/background.mp4` to update the scenery. The current file is the creator's newer Flow video (about 3.35 MB), copied into the project. Playback uses a project-relative URL; no Drive link or computer-specific path is needed. A pause button, reduced-motion behavior, and a navy fallback are provided.
+Replace the matching MP4 in `public/videos/` to update a scene; `background.mp4` is the original, with `morning.mp4`, `winter.mp4`, `spring.mp4`, `autumn.mp4`, and `rain.mp4` for the five themes. The current file is the creator's newer Flow video (about 3.35 MB), copied into the project. Playback uses a project-relative URL; no Drive link or computer-specific path is needed. A pause button, reduced-motion behavior, and a navy fallback are provided.
 
 ## Storage, privacy, and limits
 
