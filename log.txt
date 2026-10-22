@@ -617,3 +617,6 @@ User supplied five local MP4 paths: Woman_writing_at_wooden_table_20261022220431
 
 2026-10-23 — Responsive phone layout
 User: "make it responsive so that it looks nice on phone also". Follow-up: "remove this in canvas view" (React Flow attribution badge screenshot). Added responsive.css for a two-row phone header, full-width view navigation, compact filters and labelled daily report icon, readable inputs, larger tap targets, scrollable dialogs, responsive notes/themes/reports, safe-area spacing and mobile canvas controls. Enabled explicit pinch zoom and updated touch guidance. Hid the canvas attribution badge with React Flow proOptions; preserved dependency notices.
+
+2026-10-23 — Canvas instruction spacing
+User: "fix that spacing issues there beside the text and zoom symbol". Increased mobile canvas hint inset to leave a 20px gap after the zoom controls, aligned the controls and hint to consistent bottom spacing, and improved text size and wrapping.
