@@ -599,3 +599,7 @@ IMPLEMENTATION CHOICES
 - Rich text is saved through an allowed-format sanitizer; paste inserts plain text. Attached image files are rendered from local Blob URLs separately.
 - File contents use IndexedDB to avoid exhausting localStorage with base64 documents. Firebase Hosting remains hosting, with no account/database/storage backend added.
 - README tool credits reflect the creator's confirmation. This app has no runtime Gemini API integration; no AI feature or external tool prompt history is claimed without evidence.
+
+FOLLOW-UP ALIGNMENT FIX - 2026-10-22
+User prompt: "alignment fixes pls" (two screenshots of Delete note and the font selector).
+Aligned the Delete note icon and label in one centered flex row. Gave the font selector a consistent height, padding, and a centered custom chevron instead of the browser-dependent arrow. No task or note behavior changed.
