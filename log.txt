@@ -623,3 +623,6 @@ User: "fix that spacing issues there beside the text and zoom symbol". Increased
 
 2026-10-23 — Empty canvas card overlapping zoom controls
 User reported the empty-state card covering the +/−/fit controls on a phone. Reserved the lower 168px of the mobile canvas for controls and instructions, positioned the empty card within the remaining region, reduced its internal spacing and set a 500px minimum mobile canvas height so the card fits above the controls.
+
+2026-10-23 — Explicit React Flow badge removal
+User repeated the request to remove the React Flow badge. Kept hideAttribution enabled and added a global display:none rule for the attribution element across all screen sizes. Added revalidation headers for the root HTML document and index.html so browsers check for current app entry files on reload. Video and hashed asset cache policies are unchanged.
