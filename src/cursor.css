@@ -1,0 +1,81 @@
+/* A native cursor image, with no tracking overlay to obstruct text selection. */
+@media (hover: hover) and (pointer: fine) {
+  :root {
+    --cursor-sparkles: url('./assets/sparkles-cursor.svg') 18 15, auto;
+  }
+
+  body {
+    cursor: var(--cursor-sparkles);
+  }
+
+  /* Reading and editing retain the familiar I-beam and native clipboard behavior. */
+  :is(h1, h2, h3, h4, h5, h6, p, span, label, dt, dd, time, li, small,
+      strong, em, blockquote, td, th, code, pre, .task-copy, .report-task-title) {
+    cursor: text;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  :is(button, a, [role='button'], [role='menuitem'], summary, select),
+  :is(button, a, [role='button'], [role='menuitem'], summary, select) *,
+  input:is([type='checkbox'], [type='radio'], [type='range'], [type='button'], [type='submit'], [type='reset']),
+  .canvas-card, .canvas-card:active,
+  .card-drag-handle, .card-drag-handle *,
+  .react-flow .react-flow__pane, .react-flow .react-flow__pane.dragging,
+  .react-flow .react-flow__edge, .react-flow .react-flow__edge *,
+  .react-flow .react-flow__controls-button, .react-flow .react-flow__controls-button * {
+    cursor: var(--cursor-sparkles);
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Explicitly override React Flow's inherited no-selection rule for card copy. */
+  .canvas-card .task-copy,
+  .canvas-card .task-copy :is(.task-title, p, .card-status, .timing-phase, .timing-counters, strong, span) {
+    cursor: text;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Nested labels/icons remain part of the control's sparkle hit area. */
+  .canvas-card .task-copy :is(button, a, select),
+  .canvas-card .task-copy :is(button, a, select) * {
+    cursor: var(--cursor-sparkles);
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='button']):not([type='submit']):not([type='reset']):not([type='color']):not([type='file']):not([type='image']),
+  textarea, [contenteditable]:not([contenteditable='false']), [role='textbox'] {
+    cursor: text;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  button:disabled, button:disabled *, button[aria-disabled='true'], button[aria-disabled='true'] *,
+  [role='menuitem'][data-disabled], input:disabled, select:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* Card copy can be selected on touchscreens too, without starting a drag. */
+.task-copy {
+  -webkit-user-select: text;
+  user-select: text;
+}
+.task-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.card-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 26px;
+  color: #a4bbc7;
+  touch-action: none;
+}
+

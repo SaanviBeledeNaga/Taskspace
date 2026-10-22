@@ -1,0 +1,14 @@
+import { describe, expect, it } from 'vitest';
+import { duration, fromDateTimeInput, latestEvent, pendingEvents, taskElapsed, taskPhase, toDateTimeInput, validSchedule } from './timing';
+const schedule={startAt:'2026-10-22T10:00:00.000Z',endAt:'2026-10-22T10:30:00.000Z',reminderMinutes:5};
+const at=(time:string)=>Date.parse(`2026-10-22T${time}:00.000Z`);
+describe('timezone-safe task scheduling',()=>{
+ it('converts Indian time without changing instants when displaying another zone',()=>{const instant=fromDateTimeInput('2026-10-22T15:30','Asia/Kolkata');expect(instant).toBe(schedule.startAt);expect(toDateTimeInput(instant,'America/New_York')).toBe('2026-10-22T06:00');});
+ it('supports overnight sessions and rejects invalid intervals',()=>{const startAt=fromDateTimeInput('2026-10-22T23:30','Asia/Kolkata'),endAt=fromDateTimeInput('2026-10-23T00:30','Asia/Kolkata');expect(validSchedule({startAt,endAt,reminderMinutes:5})).toBe(true);expect(duration(Date.parse(endAt)-Date.parse(startAt))).toBe('01:00:00');expect(validSchedule({...schedule,endAt:schedule.startAt})).toBe(false);});
+ it('rejects nonexistent or ambiguous daylight-saving times',()=>{expect(()=>fromDateTimeInput('2026-03-08T02:30','America/New_York')).toThrow('does not exist');expect(()=>fromDateTimeInput('2026-11-01T01:30','America/New_York')).toThrow('occurs twice');expect(fromDateTimeInput('2026-11-01T02:30','America/New_York')).toBe('2026-11-01T07:30:00.000Z');});
+ it('auto-starts at the boundary, reports overtime and freezes elapsed time at completion',()=>{const task={completed:false,schedule};expect(taskPhase(task,at('09:59'))).toBe('Scheduled');expect(taskPhase(task,at('10:00'))).toBe('In progress');expect(taskPhase(task,at('10:30'))).toBe('Time is up');expect(duration(taskElapsed(task,at('11:00')))).toBe('01:00:00');expect(duration(taskElapsed({...task,completed:true,completedAt:'2026-10-22T10:12:00Z'},at('11:00')))).toBe('00:12:00');});
+ it('only delivers events once and suppresses reminders for completed tasks',()=>{const task={completed:false,schedule};const events=pendingEvents(task,at('10:26'));expect(events.map(e=>e.kind)).toEqual(['start','reminder']);expect(pendingEvents({...task,deliveredAlerts:events.map(e=>e.key)},at('10:26'))).toEqual([]);expect(pendingEvents({...task,completed:true},at('11:00'))).toEqual([]);});
+ it('catches up with the latest deadline after sleeping without replaying a start alarm',()=>{const events=pendingEvents({completed:false,schedule},at('11:00'));expect(events).toHaveLength(3);expect(latestEvent(events)?.kind).toBe('end');expect(pendingEvents({completed:false,schedule,deliveredAlerts:events.map(e=>e.key)},at('11:01'))).toEqual([]);});
+ it('skips early reminders outside the allocated interval',()=>{expect(pendingEvents({completed:false,schedule:{...schedule,reminderMinutes:30}},at('10:30')).map(e=>e.kind)).toEqual(['start','end']);});
+});
+
