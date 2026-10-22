@@ -603,3 +603,7 @@ IMPLEMENTATION CHOICES
 FOLLOW-UP ALIGNMENT FIX - 2026-10-22
 User prompt: "alignment fixes pls" (two screenshots of Delete note and the font selector).
 Aligned the Delete note icon and label in one centered flex row. Gave the font selector a consistent height, padding, and a centered custom chevron instead of the browser-dependent arrow. No task or note behavior changed.
+
+SCHEDULED-TASK INTERACTION HARDENING - 2026-10-22
+User report: "If a task is scheduled then iam unable to delete other tasks or that particular in list view but im able to do so in chart view" and "when a task has been set usign start and end time, im unable to add sticky notes and im unable to delete or edit previously sticky notes".
+The permanent lock did not reproduce in the initial deployed-browser check: another task was deleted and a note was edited/deleted while a scheduled task started. To address fragile popup ownership, moved scheduling into one shared editor outside ticking cards; only countdown text refreshes every second. Saving/cancelling releases the schedule editor immediately. Task option menus are non-modal, and closed dialog/menu surfaces cannot intercept clicks. Added interaction regression checks for upcoming, running, and overdue schedules.
