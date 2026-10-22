@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { getTheme, backgroundDim, type ThemeId } from './themes';
 import { arrangeCards } from './arrange';
 import { readAttachments, readNotes, noteColors, type Attachment, type StickyNote } from './board';
 import { defaultZone, validSchedule, validZone, type TaskSchedule } from './timing';
@@ -7,11 +8,11 @@ export type Task = {id:string;title:string;description:string;completed:boolean;
 export type CardHandle = 'left'|'right';
 export type Connection = {id:string;sourceTaskId:string;targetTaskId:string;sourceHandle?:CardHandle;targetHandle?:CardHandle};
 type Position = {x:number;y:number};
-type Prefs = {view:'list'|'canvas'|'notes';filter:'all'|'active'|'completed';timeZone:string;viewport:{x:number;y:number;zoom:number}};
+type Prefs = {theme:ThemeId;backgroundDim:number;view:'list'|'canvas'|'notes';filter:'all'|'active'|'completed';timeZone:string;viewport:{x:number;y:number;zoom:number}};
 type Data = {schemaVersion:1;tasks:Task[];notes:StickyNote[];positions:Record<string,Position>;connections:Connection[];preferences:Prefs;historyStartedAt:string;history:TaskHistoryEvent[]};
 type Undo = {token:string;task:Task;index:number;position?:Position;connections:Connection[]};
 export const KEY='taskspace-workspace-v1';
-export const empty = ():Data => ({schemaVersion:1,tasks:[],notes:[],positions:{},connections:[],historyStartedAt:new Date().toISOString(),history:[],preferences:{view:'list',filter:'all',timeZone:defaultZone(),viewport:{x:0,y:0,zoom:1}}});
+export const empty = ():Data => ({schemaVersion:1,tasks:[],notes:[],positions:{},connections:[],historyStartedAt:new Date().toISOString(),history:[],preferences:{theme:'cinematic',backgroundDim:0,view:'list',filter:'all',timeZone:defaultZone(),viewport:{x:0,y:0,zoom:1}}});
 const finite=(x:unknown):x is number=>typeof x==='number'&&Number.isFinite(x);
 export function parseSaved(raw:string):Data {
  const x=JSON.parse(raw); if(x?.schemaVersion!==1||!Array.isArray(x.tasks)||!Array.isArray(x.connections)) throw Error('Unsupported data');
@@ -19,6 +20,7 @@ export function parseSaved(raw:string):Data {
  const pairs=new Set<string>(); const connections:Connection[]=x.connections.filter((c:any)=>{if(!c||typeof c.id!=='string'||!ids.has(c.sourceTaskId)||!ids.has(c.targetTaskId)||c.sourceTaskId===c.targetTaskId)return false; const k=[c.sourceTaskId,c.targetTaskId].sort().join(':');if(pairs.has(k))return false;pairs.add(k);return true;}).map((c:Connection)=>({...c,sourceHandle:c.sourceHandle==='left'?'left':'right',targetHandle:c.targetHandle==='right'?'right':'left'}));
  const positions:Record<string,Position>={};tasks.forEach((t,i)=>{const p=x.positions?.[t.id];positions[t.id]=finite(p?.x)&&finite(p?.y)?{x:p.x,y:p.y}:{x:(i%3)*300,y:Math.floor(i/3)*200};});
  const preferences=empty().preferences; if(['list','canvas'].includes(x.preferences?.view))preferences.view=x.preferences.view;if(['all','active','completed'].includes(x.preferences?.filter))preferences.filter=x.preferences.filter;
+ preferences.theme=getTheme(x.preferences?.theme).id;preferences.backgroundDim=backgroundDim(x.preferences?.backgroundDim,getTheme(preferences.theme).dim);
  if(validZone(x.preferences?.timeZone))preferences.timeZone=x.preferences.timeZone;
  const v=x.preferences?.viewport;if(finite(v?.x)&&finite(v?.y)&&finite(v?.zoom)&&v.zoom>=.2&&v.zoom<=2)preferences.viewport=v;
  const observedAt=new Date().toISOString(),history=readHistory(x.history);

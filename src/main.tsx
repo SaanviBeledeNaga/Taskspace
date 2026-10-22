@@ -7,3 +7,5 @@ import './cursor.css';
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
 
 import './board.css';
+
+import './themes.css';
