@@ -9,3 +9,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><
 import './board.css';
 
 import './themes.css';
+import './responsive.css';
