@@ -620,3 +620,6 @@ User: "make it responsive so that it looks nice on phone also". Follow-up: "remo
 
 2026-10-23 — Canvas instruction spacing
 User: "fix that spacing issues there beside the text and zoom symbol". Increased mobile canvas hint inset to leave a 20px gap after the zoom controls, aligned the controls and hint to consistent bottom spacing, and improved text size and wrapping.
+
+2026-10-23 — Empty canvas card overlapping zoom controls
+User reported the empty-state card covering the +/−/fit controls on a phone. Reserved the lower 168px of the mobile canvas for controls and instructions, positioned the empty card within the remaining region, reduced its internal spacing and set a 500px minimum mobile canvas height so the card fits above the controls.
