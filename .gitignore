@@ -3,3 +3,10 @@ dist/
 .sites-local/
 *.tsbuildinfo
 .firebase/
+
+# Local agent tools and credentials are not application assets.
+.agents/
+skills-lock.json
+.env
+.env.*
+!.env.example

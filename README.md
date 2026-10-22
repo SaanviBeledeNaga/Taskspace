@@ -1,21 +1,69 @@
 # Taskspace
 
-A browser-local task workspace with a list and freely connected canvas. Built with React, Vite, TypeScript, Tailwind, React Flow, Zustand, and shadcn-style Radix components.
+A calm, single-page to-do app built for a club tech-lead selection project. Create, edit, complete, and delete tasks in a simple list, arrange those same cards on a connected canvas, and keep ideas on a sticky-note board.
 
-## Verification status
+## Features
 
-Source implementation and the supplied video are included. Dependencies are now installed locally. The TypeScript check, automated state/scheduling tests, and production build are checked during the scheduling update. Browser interactions and actual speaker/desktop-notification delivery still need a live browser check. No hosted deployment has been created.
+- **Task management:** quick add, descriptions, completion, active/completed filters, and an eight-second undo for task deletion.
+- **Freeform canvas:** drag cards, zoom/pan, and connect either dot to either dot by dragging or clicking two dots. Larger connection handles show a plus on hover. Select a line to remove it.
+- **Smart Arrange:** an explicit canvas action that lays out visible cards and connects them in sequence. Scheduled cards come first, in start-time order; untimed cards follow in creation order. Creation time breaks start-time ties; identical timestamps retain their original order. It keeps existing connections and hidden cards. Nothing rearranges automatically when a task is added or scheduled; cards remain draggable afterward. Lines represent visual associations, not enforced dependencies.
+- **Scheduling:** start/end dates and times, allocated duration, elapsed/remaining time, overtime, and recorded completion time. A live HH:MM:SS clock and timezone selector control display without changing scheduled instants.
+- **Reminders and sound:** enable alerts to unlock audio and optionally allow desktop notifications. Completion plays a short chime. Deadline alarms repeat until dismissed, muted, or the task is completed, deleted, or rescheduled. Adjustable volume and test controls are included.
+- **Daily overview:** historical task statuses, completion rate, completed versus unfinished counts, average duration for timed completed tasks, overdue counts, and a seven-day trend.
+- **Sticky notes:** click a note to edit its title and body; apply bold, italic, underline, strikethrough, highlight, text colour, and fonts to selected text. Add checklists, pictures, and documents, choose a pastel note colour, and save automatically as you write.
+- **Task attachments:** the 📎 control beneath each card description accepts documents such as PDF, Word, Excel, and PowerPoint, as well as other files. Download or remove attached files; each file is limited to 20 MB.
+- **Cinematic design:** locally served looping video, glass surfaces, Instrument Serif and Inter typography, gentle context transitions, a sparkle cursor on controls, and a soft white cursor glow over clickable elements. Text editing keeps the normal selection cursor. Reduced-motion preferences are respected.
 
-## Run
+## Google tools and development credits
 
-Install Node.js 20.19+ or 22.12+ and run:
+The creator confirmed using all the following Google tools during project development. These are development credits; the deployed app does not call Gemini or these design tools at runtime.
+
+| Tool | Purpose in the project workflow |
+| --- | --- |
+| Google Stitch | UI planning and interface exploration. |
+| Google AI Studio / Gemini | Concept development, prompt iteration, and AI assistance while building the project. |
+| Google Antigravity | AI-assisted development and implementation iteration. |
+| Nano Banana | Visual and imagery exploration during the design process. |
+| Google Flow | Visual planning and generation of the background video supplied for the app. |
+| Firebase Hosting | Hosting the production build; GitHub Actions are configured to deploy changes from `main`. |
+| Google Fonts | Instrument Serif for display text and Inter for the interface. |
+
+Implementation and refinements in this repository were also assisted by Codex. See [log.txt](log.txt) for the available build history and actual prompts from this conversation. Separate external tool sessions are not reproduced or invented.
+
+## Stack and structure
+
+React 19, TypeScript, Vite, Tailwind CSS, React Flow (`@xyflow/react`), Zustand, Lucide icons, and accessible Radix primitives with locally owned shadcn-style UI components.
+
+```text
+src/
+  App.tsx              List, canvas, shared task cards, and workspace navigation
+  store.ts             Task/note state, persistence, connections, and undo
+  arrange.ts           Start-time/creation ordering and canvas layout
+  NotesBoard.tsx       Sticky-note board, rich editor, and checklists
+  richText.ts          Allowed-format sanitization for note content
+  Attachments.tsx      File picker, download/remove controls, image previews
+  files.ts             IndexedDB Blob storage and file-size validation
+  TaskTiming.tsx       Clock, task schedules, reminders, and alert controls
+  timing.ts            Timezone conversion and timestamp-based scheduling
+  sounds.ts            Locally synthesized Web Audio tones
+  DailyOverview.tsx    Daily reports and charts
+  statistics.ts        Historical snapshots and report calculations
+  transitions.ts       Live-content context movement
+  ClickGlow.tsx        Clickable-control cursor glow
+public/videos/background.mp4
+.github/workflows/      Firebase Hosting deployment and PR preview workflows
+```
+
+## Run locally
+
+Use Node.js 22 LTS and npm.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-## Verify and build
+Open the local URL printed by Vite, normally `http://localhost:5173/`.
 
 ```sh
 npm test
@@ -23,63 +71,36 @@ npm run build
 npm run preview
 ```
 
-The production output is `dist/`. Host its contents using a static hosting service. Configure Vite's `base` when deploying beneath a subdirectory. Video URLs respect that configuration.
+The build checks TypeScript and writes production files to `dist/`. Tests cover shared state, graph ordering and connections, persistence/migration, notes and attachment metadata, scheduling/timezones, statistics, sound behavior, and context transitions. Speaker output, operating-system notifications, and device-specific browser behavior require manual checks.
 
-## Background video
+## Firebase and GitHub deployment
 
-Your supplied video is copied to `public/videos/background.mp4`. The original source file remains unchanged. Replace this project file to change the background. The video is about 10 MB and is served with the app, never through a Drive link. The app falls back to navy when playback is unavailable. Pause scenery controls playback, and reduced-motion preferences disable automatic playback.
+The configured Firebase project is `taskspace-d17c0`. `firebase.json` serves `dist/` and rewrites navigation to `index.html`.
 
-## Saved data
+1. Commit reviewed changes and push to `main` in this repository.
+2. The Firebase Hosting workflow installs locked dependencies, runs the automated tests and production build, then deploys the live channel.
+3. Check the workflow result in GitHub Actions before assuming the live site has updated. Pull requests have a separate preview workflow.
 
-Tasks, positions, visual connections, view, filter, viewport, and daily task history use the `taskspace-workspace-v1` localStorage key. This is browser-specific storage, with no account or cloud synchronization. Clearing site data removes the saved workspace and history. The latest deletion can be undone for eight seconds.
+The workflows use GitHub's `GITHUB_TOKEN` and the repository secret `FIREBASE_SERVICE_ACCOUNT_TASKSPACE_D17C0`, created during the Firebase/GitHub setup. Credentials belong in repository secrets, never in source files. A missing/expired service-account secret or insufficient workflow permissions will prevent deployment.
 
-Connections are visual associations. They never block task completion. Select a line to remove it or press Delete/Backspace outside editable fields. Filters hide cards and lines without deleting their saved data.
+For a manual deployment from an already authorized Firebase CLI session:
 
-## Clock, schedules, and alerts
+```sh
+npm run deploy
+```
 
-The header clock shows hours, minutes, and seconds. Its timezone selector controls the display of all task schedules. Scheduled instants are stored in UTC, so changing the timezone never moves an existing task. Older saved tasks migrate without requiring a reset.
+Replace `public/videos/background.mp4` to update the scenery. The current file is the creator's newer Flow video (about 3.35 MB), copied into the project. Playback uses a project-relative URL; no Drive link or computer-specific path is needed. A pause button, reduced-motion behavior, and a navy fallback are provided.
 
-Each task card has a Set start & end time control. Choose start/end dates and times and an optional reminder 1, 5, 10, 15, or 30 minutes before the deadline. Overnight tasks use the following date for the end. Nonexistent and ambiguous daylight-saving times are rejected with an explanation. A reminder is skipped when it would occur at or before the session start.
+## Storage, privacy, and limits
 
-Scheduled tasks become In progress at their start time. Cards display allocated duration, elapsed time, remaining time, and overtime. Completion records a timestamp and freezes Time taken. Time taken measures wall-clock time from the scheduled start to completion, including overtime; it does not measure active keyboard work. At the deadline, the task becomes Time is up and stays incomplete until the user checks it off.
+- Task data, notes, attachment metadata, settings, positions, connections, and daily history are saved under `taskspace-workspace-v1` in localStorage. File contents are Blobs in the `taskspace-files-v1` IndexedDB database. Files are not encoded into localStorage.
+- Workspace content and attachments stay in the current browser and website origin. Firebase Hosting distributes the app; it does not synchronize this data. Localhost and the deployed site have separate workspaces. Clearing site data removes both notes/tasks and files. Browser quotas and private browsing can limit saving; errors are shown in the interface.
+- Removing an attachment deletes its file locally. Deleting a task keeps its file data available for undo. File data belonging to deleted cards or notes may remain in IndexedDB until site data is cleared.
+- Rich note content is restricted to supported text formatting. Paste inserts plain text; documents download as files rather than executing inside the app. Images attached to notes have local previews.
+- Reminders require the page to remain open and the device awake. Browsers can suspend tabs or audio; closed-tab/background delivery is not guaranteed. Desktop notifications require permission, and sound needs a user gesture to enable it.
+- Time taken is wall-clock time from the scheduled start to completion, including overtime. It does not measure active work. Unscheduled tasks count toward completion totals but are excluded from time averages. Productivity is completion rate, not an assessment of work quality.
+- Daily reports use recorded history and the selected timezone. Older workspaces begin tracking at migration time; earlier activity is not fabricated. Connections and daily history are preserved when changing views or filters.
 
-Click Enable alerts to unlock sound and request desktop-notification permission. Sound and desktop notifications depend on browser support and permissions. A shared volume slider and separate Test completion / Test alarm actions are available after enabling sound.
+## License
 
-A short rising completion chime plays once when a task changes from incomplete to complete, including tasks without schedules, completion in either view, and completion through the deadline alert. Reopening, editing, restoring completed tasks, refreshing, and switching views do not replay it. Checking off a task again after reopening it plays a fresh completion chime. This uses the shared task action, so one completion cannot produce separate sounds from both views.
-
-Deadline alarms use a louder triangle-wave tone repeating every 1.6 seconds, with no automatic timeout. They continue until dismissed, muted, or the task is completed (or removed/rescheduled). The shared volume defaults to 80% and remains adjustable. Completion cancels currently queued alarm tones before playing the brief success chime. Muting and zero volume silence both sounds. Test alarm also loops until Stop test alarm is pressed. The player cleans up audio nodes and resumes suspended audio on a completion click where the browser allows it. All tones are synthesized locally with Web Audio and require no external sound files. In-app alerts remain visible until dismissed. With multiple alarms, dismiss all stops the batch.
-
-Timers compare persisted timestamps with the current clock instead of counting interval ticks. On focus or resume, overdue events catch up with only the latest relevant alert per task, and delivered event keys prevent replay after refresh. Completed/deleted tasks do not alert. Rescheduling invalidates old pending alerts.
-
-Keep the page open and the device awake for alerts. Closed tabs, browser suspension, muted devices, and operating-system restrictions can delay or prevent delivery. This local-only version cannot promise background alarms after closing the app. Background push scheduling would require additional service-worker and server infrastructure.
-
-## Daily overview and statistics
-
-Open Daily overview beside the List/Canvas and filter controls. The panel provides a date picker, a daily task-status list with filters, completion rate, completed versus unfinished counts, average time per timed completed task, overdue/in-progress counts, total recorded session time, on-time completion, and a seven-day stacked trend. Reports use the selected clock timezone and historical day boundaries, including daylight-saving changes.
-
-Productivity means completion rate: completed / (completed + unfinished). It is not a rating of work quality. Unfinished tasks carry forward once their scheduled start date arrives; tasks created that day are also included even if scheduled later. Completed tasks count on their completion date. Repeated check-offs of the same task do not inflate the day's total.
-
-Average time uses only completed tasks with a known scheduled start and a completion at or after it. It includes overtime and measures wall-clock session duration, not active work. Unscheduled completions still count as completed but do not enter time averages. Empty or unavailable averages display a dash rather than a fabricated zero.
-
-Meaningful task changes append immutable snapshots to browser storage. Past dates reconstruct the final state recorded by that day's end; the current day remains live. Reopening or rescheduling tomorrow does not rewrite yesterday. Completion durations use the schedule captured when the task was completed. Deleting completed tasks retains their history. Deleted unfinished tasks are visible as Deleted on the deletion date and excluded from totals. Undo restores current workspace state and records a restoration.
-
-Older workspaces migrate with baseline snapshots at the time of this upgrade. Tracking starts then, and the app explicitly avoids inventing earlier daily activity. Existing completed tasks without completion timestamps cannot be attributed to a day. History is local-only and will be lost if browser storage is cleared.
-
-## Design system
-
-### Cursor
-
-On devices with a mouse or other fine pointer, navigation, buttons, menus, checkboxes, and canvas controls use a small gold ✨ cursor. It is a local SVG cursor asset with no tracking overlay or external service. Readable text and text-entry fields retain the normal I-beam, native selection, and clipboard shortcuts. Disabled controls keep the standard unavailable cursor. Touch devices retain their normal behavior.
-
-Canvas card text uses React Flow's nodrag/nopan exclusions so selecting text does not move the card. A small grip and the card's surrounding padding remain available for dragging. The cursor style does not change the stable-blur transition implementation.
-
-### Context transitions
-
-List/Canvas switches and task filters use a single 460 ms movement of the live content with a gradual ease-in/out. Daily report dates, chart-day selection, report status filters, and timezone changes use the same motion language. The region stays fully opaque and cards retain their final blur throughout. Snapshot View Transitions are deliberately avoided for these glass surfaces, as are ancestor opacity/filter effects and animated workspace width. Rapid switches apply immediately in order and cancel only the previous movement.
-
-Dialogs and overlays animate on both open and close, including task editing, schedules, and the daily overview. Dropdown menus animate from their trigger origin. Toasts and task reminders retain their content briefly for exit animations, with interaction disabled while exiting. Completion checkmarks and chart changes receive subtle feedback. Glass cards and empty-state surfaces do not replay a second entrance animation when the context movement ends.
-
-Motion respects prefers-reduced-motion. The live clock, timer ticks, graph node transforms, and canvas dragging do not trigger context transitions. Animation does not restart the video, reset saved positions, or remount the sound controller. No additional animation package is needed. Browsers without Web Animations apply context changes immediately. Actual browser appearance still needs a live check in the target browser.
-
-Instrument Serif and Inter load from Google Fonts, with local serif/sans-serif fallbacks. Accessible dialogs and menus use Radix primitives with shadcn-style locally owned components.
-
+No open-source license has been selected. Third-party dependencies retain their respective licenses. The supplied background video belongs to the creator's project assets.
